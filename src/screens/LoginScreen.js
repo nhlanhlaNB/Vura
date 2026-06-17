@@ -9,20 +9,25 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import * as Animatable from 'react-native-animatable';
 import { AuthContext } from '../context/AuthContext';
+import { colors, spacing, borderRadius, shadows, typography } from '../theme/colors';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [userType, setUserType] = useState('user'); // 'user' or 'driver'
+  const [userType, setUserType] = useState('user');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useContext(AuthContext);
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert('Oops!', 'Please fill in all fields');
       return;
     }
 
@@ -37,193 +42,385 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <LinearGradient
+      colors={[colors.background, colors.lightGray]}
       style={styles.container}
     >
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-      >
-        <Ionicons name="arrow-back" size={24} color="#000" />
-      </TouchableOpacity>
-
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Login to continue</Text>
-
-        <View style={styles.userTypeContainer}>
-          <TouchableOpacity
-            style={[styles.userTypeButton, userType === 'user' && styles.userTypeActive]}
-            onPress={() => setUserType('user')}
-          >
-            <Ionicons name="person" size={20} color={userType === 'user' ? '#fff' : '#000'} />
-            <Text style={[styles.userTypeText, userType === 'user' && styles.userTypeTextActive]}>
-              Rider
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.userTypeButton, userType === 'driver' && styles.userTypeActive]}
-            onPress={() => setUserType('driver')}
-          >
-            <Ionicons name="car" size={20} color={userType === 'driver' ? '#fff' : '#000'} />
-            <Text style={[styles.userTypeText, userType === 'driver' && styles.userTypeTextActive]}>
-              Driver
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-        </View>
-
-        <TouchableOpacity style={styles.forgotPassword}>
-          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.loginButton}
-          onPress={handleLogin}
-          disabled={loading}
+      <SafeAreaView style={styles.safeArea}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardView}
         >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.loginButtonText}>Login</Text>
-          )}
-        </TouchableOpacity>
+          <Animatable.View animation="slideInLeft" duration={600} style={styles.backButtonContainer}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Ionicons name="arrow-back" size={24} color={colors.primary} />
+            </TouchableOpacity>
+          </Animatable.View>
 
-        <View style={styles.signupContainer}>
-          <Text style={styles.signupText}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-            <Text style={styles.signupLink}>Sign Up</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </KeyboardAvoidingView>
+          <Animatable.View animation="fadeInDown" duration={700} style={styles.header}>
+            <Text style={styles.title}>Welcome Back! 👋</Text>
+            <Text style={styles.subtitle}>Get back on the road</Text>
+          </Animatable.View>
+
+          <Animatable.View animation="fadeIn" delay={200} duration={700} style={styles.content}>
+            <View style={styles.userTypeContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.userTypeButton,
+                  userType === 'user' && styles.userTypeActive,
+                ]}
+                onPress={() => setUserType('user')}
+                activeOpacity={0.8}
+              >
+                <View
+                  style={[
+                    styles.userTypeIconBg,
+                    userType === 'user' && styles.userTypeIconBgActive,
+                  ]}
+                >
+                  <Ionicons
+                    name="person"
+                    size={20}
+                    color={userType === 'user' ? colors.white : colors.primary}
+                  />
+                </View>
+                <Text
+                  style={[
+                    styles.userTypeText,
+                    userType === 'user' && styles.userTypeTextActive,
+                  ]}
+                >
+                  Rider
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.userTypeButton,
+                  userType === 'driver' && styles.userTypeActive,
+                ]}
+                onPress={() => setUserType('driver')}
+                activeOpacity={0.8}
+              >
+                <View
+                  style={[
+                    styles.userTypeIconBg,
+                    userType === 'driver' && styles.userTypeIconBgActive,
+                  ]}
+                >
+                  <Ionicons
+                    name="car"
+                    size={20}
+                    color={userType === 'driver' ? colors.white : colors.primary}
+                  />
+                </View>
+                <Text
+                  style={[
+                    styles.userTypeText,
+                    userType === 'driver' && styles.userTypeTextActive,
+                  ]}
+                >
+                  Driver
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.inputsContainer}>
+              <View style={styles.inputContainer}>
+                <Ionicons
+                  name="mail-outline"
+                  size={20}
+                  color={colors.textGray}
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email Address"
+                  placeholderTextColor={colors.darkGray}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={20}
+                  color={colors.textGray}
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  placeholderTextColor={colors.darkGray}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeIcon}
+                >
+                  <Ionicons
+                    name={showPassword ? 'eye-off' : 'eye'}
+                    size={20}
+                    color={colors.textGray}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.forgotPassword}
+              onPress={() => Alert.alert('Info', 'Password reset coming soon!')}
+            >
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity>
+
+            <LinearGradient
+              colors={colors.gradients.primary}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.loginButtonGradient}
+            >
+              <TouchableOpacity
+                style={styles.loginButton}
+                onPress={handleLogin}
+                disabled={loading}
+                activeOpacity={0.8}
+              >
+                {loading ? (
+                  <ActivityIndicator color={colors.white} size="large" />
+                ) : (
+                  <>
+                    <Text style={styles.loginButtonText}>Login</Text>
+                    <Ionicons
+                      name="arrow-forward"
+                      size={20}
+                      color={colors.white}
+                      style={{ marginLeft: spacing[2] }}
+                    />
+                  </>
+                )}
+              </TouchableOpacity>
+            </LinearGradient>
+
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <TouchableOpacity
+              style={styles.socialButton}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="logo-google" size={20} color={colors.primary} />
+              <Text style={styles.socialButtonText}>Continue with Google</Text>
+            </TouchableOpacity>
+          </Animatable.View>
+
+          <Animatable.View animation="fadeInUp" delay={400} duration={700} style={styles.signupContainer}>
+            <Text style={styles.signupText}>Don't have an account?</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Signup')} activeOpacity={0.7}>
+              <Text style={styles.signupLink}>Sign Up Now</Text>
+            </TouchableOpacity>
+          </Animatable.View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+  },
+  safeArea: {
+    flex: 1,
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  backButtonContainer: {
+    padding: spacing[2],
   },
   backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 10,
-    padding: 10,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
+    width: 44,
+    height: 44,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.white,
     justifyContent: 'center',
+    alignItems: 'center',
+    ...shadows.base,
+  },
+  header: {
+    paddingHorizontal: spacing[4],
+    marginTop: spacing[2],
+    marginBottom: spacing[6],
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    fontSize: 28,
+    fontWeight: typography.bold,
+    color: colors.black,
+    marginBottom: spacing[1],
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
-    marginBottom: 30,
+    color: colors.textGray,
+    fontWeight: typography.normal,
+  },
+  content: {
+    paddingHorizontal: spacing[4],
+    flex: 1,
   },
   userTypeContainer: {
     flexDirection: 'row',
-    marginBottom: 30,
-    gap: 10,
+    marginBottom: spacing[6],
+    gap: spacing[3],
   },
   userTypeButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 15,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    gap: 8,
+    padding: spacing[3],
+    borderRadius: borderRadius.lg,
+    borderWidth: 2,
+    borderColor: colors.mediumGray,
+    backgroundColor: colors.white,
+    gap: spacing[2],
+    ...shadows.sm,
   },
   userTypeActive: {
-    backgroundColor: '#000',
-    borderColor: '#000',
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  userTypeIconBg: {
+    width: 32,
+    height: 32,
+    borderRadius: borderRadius.base,
+    backgroundColor: colors.lightGray,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  userTypeIconBgActive: {
+    backgroundColor: colors.primaryLight,
   },
   userTypeText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: typography.semibold,
+    color: colors.black,
   },
   userTypeTextActive: {
-    color: '#fff',
+    color: colors.white,
+  },
+  inputsContainer: {
+    marginBottom: spacing[4],
+    gap: spacing[3],
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
-    marginBottom: 15,
-    paddingHorizontal: 15,
+    borderWidth: 1.5,
+    borderColor: colors.mediumGray,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing[3],
+    backgroundColor: colors.white,
+    ...shadows.sm,
   },
   inputIcon: {
-    marginRight: 10,
+    marginRight: spacing[2],
   },
   input: {
     flex: 1,
-    padding: 15,
+    padding: spacing[4],
     fontSize: 16,
+    fontWeight: typography.normal,
+    color: colors.black,
+  },
+  eyeIcon: {
+    padding: spacing[2],
   },
   forgotPassword: {
     alignSelf: 'flex-end',
-    marginBottom: 20,
+    marginBottom: spacing[4],
   },
   forgotPasswordText: {
-    color: '#000',
-    fontWeight: '600',
+    color: colors.primary,
+    fontWeight: typography.semibold,
+    fontSize: 14,
+  },
+  loginButtonGradient: {
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing[4],
+    ...shadows.lg,
   },
   loginButton: {
-    backgroundColor: '#000',
-    padding: 18,
-    borderRadius: 10,
+    paddingVertical: spacing[4],
+    paddingHorizontal: spacing[6],
     alignItems: 'center',
-    marginBottom: 20,
+    justifyContent: 'center',
+    flexDirection: 'row',
   },
   loginButtonText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: typography.bold,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing[4],
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.mediumGray,
+  },
+  dividerText: {
+    marginHorizontal: spacing[3],
+    color: colors.textGray,
+    fontWeight: typography.normal,
+  },
+  socialButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[4],
+    borderWidth: 1.5,
+    borderColor: colors.mediumGray,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.white,
+    gap: spacing[2],
+    ...shadows.sm,
+  },
+  socialButtonText: {
+    color: colors.black,
+    fontWeight: typography.semibold,
+    fontSize: 16,
   },
   signupContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: spacing[4],
+    paddingHorizontal: spacing[4],
   },
   signupText: {
-    color: '#666',
+    color: colors.textGray,
+    fontWeight: typography.normal,
+    marginRight: spacing[1],
   },
   signupLink: {
-    color: '#000',
-    fontWeight: 'bold',
+    color: colors.primary,
+    fontWeight: typography.bold,
+    fontSize: 16,
   },
 });
