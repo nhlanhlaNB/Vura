@@ -14,7 +14,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Animatable from 'react-native-animatable';
 import { LocationContext } from '../../context/LocationContext';
 import LocationSearch from '../../components/LocationSearch';
-import { colors, spacing, borderRadius, shadows, typography } from '../../theme/colors';
+import { colors, gradients } from '../../theme/colors';
+import { spacing, borderRadius, shadows, typography } from '../../theme/design';
 
 const { width, height } = Dimensions.get('window');
 
@@ -139,7 +140,7 @@ export default function HomeScreen({ navigation }) {
           activeOpacity={0.7}
         >
           <LinearGradient
-            colors={colors.gradients.primary}
+            colors={gradients.primary}
             style={styles.myLocationGradient}
           >
             <Ionicons name="locate" size={24} color={colors.white} />
@@ -382,81 +383,5 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: typography.semibold,
     fontSize: 14,
-  },
-});
-  map: {
-    width: width,
-    height: height,
-  },
-  searchContainer: {
-    position: 'absolute',
-    top: 60,
-    left: 20,
-    right: 20,
-  },
-  searchButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  searchText: {
-    marginLeft: 15,
-    fontSize: 16,
-    color: '#666',
-  },
-  quickActions: {
-    position: 'absolute',
-    bottom: 100,
-    left: 20,
-    right: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  actionButton: {
-    alignItems: 'center',
-  },
-  actionIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  actionText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  myLocationButton: {
-    position: 'absolute',
-    bottom: 200,
-    right: 20,
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
 });

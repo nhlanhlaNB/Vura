@@ -15,15 +15,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Animatable from 'react-native-animatable';
 import { AuthContext } from '../context/AuthContext';
-import { colors, spacing, borderRadius, shadows, typography } from '../theme/colors';
+import { colors } from '../theme/colors';
+import { spacing, borderRadius, shadows, typography } from '../theme/design';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [userType, setUserType] = useState('user');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useContext(AuthContext);
+  const { login, loginWithGoogle } = useContext(AuthContext);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -33,11 +34,24 @@ export default function LoginScreen({ navigation }) {
 
     setLoading(true);
     try {
-      await login(email, password, userType);
+      await login(email, password);
     } catch (error) {
       Alert.alert('Login Failed', error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
+    try {
+      await loginWithGoogle();
+    } catch (error) {
+      if (error.code !== 'SIGN_IN_CANCELLED') {
+        Alert.alert('Google Sign-In Failed', error.message);
+      }
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -66,68 +80,6 @@ export default function LoginScreen({ navigation }) {
           </Animatable.View>
 
           <Animatable.View animation="fadeIn" delay={200} duration={700} style={styles.content}>
-            <View style={styles.userTypeContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.userTypeButton,
-                  userType === 'user' && styles.userTypeActive,
-                ]}
-                onPress={() => setUserType('user')}
-                activeOpacity={0.8}
-              >
-                <View
-                  style={[
-                    styles.userTypeIconBg,
-                    userType === 'user' && styles.userTypeIconBgActive,
-                  ]}
-                >
-                  <Ionicons
-                    name="person"
-                    size={20}
-                    color={userType === 'user' ? colors.white : colors.primary}
-                  />
-                </View>
-                <Text
-                  style={[
-                    styles.userTypeText,
-                    userType === 'user' && styles.userTypeTextActive,
-                  ]}
-                >
-                  Rider
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.userTypeButton,
-                  userType === 'driver' && styles.userTypeActive,
-                ]}
-                onPress={() => setUserType('driver')}
-                activeOpacity={0.8}
-              >
-                <View
-                  style={[
-                    styles.userTypeIconBg,
-                    userType === 'driver' && styles.userTypeIconBgActive,
-                  ]}
-                >
-                  <Ionicons
-                    name="car"
-                    size={20}
-                    color={userType === 'driver' ? colors.white : colors.primary}
-                  />
-                </View>
-                <Text
-                  style={[
-                    styles.userTypeText,
-                    userType === 'driver' && styles.userTypeTextActive,
-                  ]}
-                >
-                  Driver
-                </Text>
-              </TouchableOpacity>
-            </View>
-
             <View style={styles.inputsContainer}>
               <View style={styles.inputContainer}>
                 <Ionicons
@@ -218,10 +170,18 @@ export default function LoginScreen({ navigation }) {
 
             <TouchableOpacity
               style={styles.socialButton}
+              onPress={handleGoogleLogin}
+              disabled={googleLoading}
               activeOpacity={0.8}
             >
-              <Ionicons name="logo-google" size={20} color={colors.primary} />
-              <Text style={styles.socialButtonText}>Continue with Google</Text>
+              {googleLoading ? (
+                <ActivityIndicator color={colors.primary} size="small" />
+              ) : (
+                <>
+                  <Ionicons name="logo-google" size={20} color={colors.primary} />
+                  <Text style={styles.socialButtonText}>Continue with Google</Text>
+                </>
+              )}
             </TouchableOpacity>
           </Animatable.View>
 
@@ -278,47 +238,6 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing[4],
     flex: 1,
-  },
-  userTypeContainer: {
-    flexDirection: 'row',
-    marginBottom: spacing[6],
-    gap: spacing[3],
-  },
-  userTypeButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing[3],
-    borderRadius: borderRadius.lg,
-    borderWidth: 2,
-    borderColor: colors.mediumGray,
-    backgroundColor: colors.white,
-    gap: spacing[2],
-    ...shadows.sm,
-  },
-  userTypeActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  userTypeIconBg: {
-    width: 32,
-    height: 32,
-    borderRadius: borderRadius.base,
-    backgroundColor: colors.lightGray,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  userTypeIconBgActive: {
-    backgroundColor: colors.primaryLight,
-  },
-  userTypeText: {
-    fontSize: 14,
-    fontWeight: typography.semibold,
-    color: colors.black,
-  },
-  userTypeTextActive: {
-    color: colors.white,
   },
   inputsContainer: {
     marginBottom: spacing[4],

@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Dimensions } fr
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Animatable from 'react-native-animatable';
-import { colors, spacing, borderRadius, shadows, typography } from '../theme/colors';
+import { colors } from '../theme/colors';
+import { spacing, borderRadius, shadows, typography } from '../theme/design';
 
 const { width, height } = Dimensions.get('window');
 

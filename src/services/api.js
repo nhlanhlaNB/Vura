@@ -1,5 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { auth } from './firebase';
 import { API_BASE_URL } from '@env';
 
 const api = axios.create({
@@ -10,11 +11,12 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to add auth token
+// Request interceptor to add Firebase auth token
 api.interceptors.request.use(
   async (config) => {
-    const token = await AsyncStorage.getItem('authToken');
-    if (token) {
+    const firebaseUser = auth.currentUser;
+    if (firebaseUser) {
+      const token = await firebaseUser.getIdToken();
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;

@@ -1,6 +1,29 @@
 import React, { createContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { authAPI } from '../services/api';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import {
+  auth,
+  db,
+  storage,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signInWithCredential,
+  signOut,
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  serverTimestamp,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from '../services/firebase';
+import {
+  GOOGLE_WEB_CLIENT_ID,
+  GOOGLE_IOS_CLIENT_ID,
+} from '@env';
 
 export const AuthContext = createContext();
 
@@ -11,95 +34,196 @@ export const AuthProvider = ({ children }) => {
   const [driverDocuments, setDriverDocuments] = useState({});
 
   useEffect(() => {
-    checkAuthStatus();
+    GoogleSignin.configure({
+      webClientId: GOOGLE_WEB_CLIENT_ID,
+      iosClientId: GOOGLE_IOS_CLIENT_ID,
+    });
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const userDocRef = doc(db, 'users', firebaseUser.uid);
+          const userSnap = await getDoc(userDocRef);
+
+          if (userSnap.exists()) {
+            const userData = { uid: firebaseUser.uid, ...userSnap.data() };
+            setUser(userData);
+            setIsAuthenticated(true);
+
+            if (userData.userType === 'driver') {
+              const docsRef = doc(db, 'driverDocuments', firebaseUser.uid);
+              const docsSnap = await getDoc(docsRef);
+              if (docsSnap.exists()) {
+                setDriverDocuments({ [firebaseUser.uid]: docsSnap.data() });
+              }
+            }
+
+            await AsyncStorage.setItem('user', JSON.stringify(userData));
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      } else {
+        const cachedUser = await AsyncStorage.getItem('user');
+        const cachedDocs = await AsyncStorage.getItem('driverDocuments');
+
+        if (cachedDocs) {
+          setDriverDocuments(JSON.parse(cachedDocs));
+        }
+
+        if (cachedUser) {
+          setUser(JSON.parse(cachedUser));
+          setIsAuthenticated(true);
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const checkAuthStatus = async () => {
+  const login = async (email, password) => {
     try {
-      const token = await AsyncStorage.getItem('authToken');
-      const userData = await AsyncStorage.getItem('user');
-      const storedDriverDocs = await AsyncStorage.getItem('driverDocuments');
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
 
-      if (storedDriverDocs) {
-        setDriverDocuments(JSON.parse(storedDriverDocs));
+      const userDocRef = doc(db, 'users', firebaseUser.uid);
+      const userSnap = await getDoc(userDocRef);
+
+      if (!userSnap.exists()) {
+        await signOut(auth);
+        throw new Error('User data not found. Please sign up again.');
       }
-      
-      if (token && userData) {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-        setIsAuthenticated(true);
-      } else {
-        setUser(null);
-        setIsAuthenticated(false);
+
+      const userData = { uid: firebaseUser.uid, ...userSnap.data() };
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
+
+      if (userData.userType === 'driver') {
+        const docsRef = doc(db, 'driverDocuments', firebaseUser.uid);
+        const docsSnap = await getDoc(docsRef);
+        if (docsSnap.exists()) {
+          const docs = { [firebaseUser.uid]: docsSnap.data() };
+          setDriverDocuments(docs);
+          await AsyncStorage.setItem('driverDocuments', JSON.stringify(docs));
+        }
       }
+
+      setUser(userData);
+      setIsAuthenticated(true);
+      return userData;
     } catch (error) {
-      console.error('Error checking auth status:', error);
-      await AsyncStorage.removeItem('authToken');
-      await AsyncStorage.removeItem('user');
-      setUser(null);
-      setIsAuthenticated(false);
-    } finally {
-      setLoading(false);
+      console.error('Login error:', error);
+      let message = 'Invalid credentials';
+      if (error.code === 'auth/user-not-found') message = 'No account found with this email';
+      else if (error.code === 'auth/wrong-password') message = 'Incorrect password';
+      else if (error.code === 'auth/invalid-email') message = 'Invalid email address';
+      else if (error.code === 'auth/invalid-credential') message = 'Invalid email or password';
+      throw new Error(message);
     }
   };
 
-  const login = async (email, password, userType) => {
+  const loginWithGoogle = async () => {
     try {
-      // In real app, call API
-      // const response = await authAPI.login(email, password, userType);
-      
-      // Mock response
-      const mockUser = {
-        id: '1',
-        name: 'John Doe',
-        email,
-        userType,
-        phone: '+1234567890',
-      };
-      
-      const mockToken = 'mock-jwt-token';
-      
-      await AsyncStorage.setItem('authToken', mockToken);
-      await AsyncStorage.setItem('user', JSON.stringify(mockUser));
-      
-      setUser(mockUser);
+      await GoogleSignin.hasPlayServices();
+      const { data } = await GoogleSignin.signIn();
+
+      if (!data?.idToken) {
+        throw new Error('Google sign-in was cancelled');
+      }
+
+      const credential = GoogleAuthProvider.credential(data.idToken);
+      const userCredential = await signInWithCredential(auth, credential);
+      const firebaseUser = userCredential.user;
+
+      const userDocRef = doc(db, 'users', firebaseUser.uid);
+      const userSnap = await getDoc(userDocRef);
+
+      let userData;
+
+      if (!userSnap.exists()) {
+        userData = {
+          name: data.user?.name || '',
+          email: data.user?.email || '',
+          phone: '',
+          userType: 'user',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        };
+        await setDoc(userDocRef, userData);
+        userData = { uid: firebaseUser.uid, ...userData };
+      } else {
+        userData = { uid: firebaseUser.uid, ...userSnap.data() };
+      }
+
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
+
+      if (userData.userType === 'driver') {
+        const docsRef = doc(db, 'driverDocuments', firebaseUser.uid);
+        const docsSnap = await getDoc(docsRef);
+        if (docsSnap.exists()) {
+          const docs = { [firebaseUser.uid]: docsSnap.data() };
+          setDriverDocuments(docs);
+          await AsyncStorage.setItem('driverDocuments', JSON.stringify(docs));
+        }
+      }
+
+      setUser(userData);
       setIsAuthenticated(true);
-      
-      return mockUser;
+      return userData;
     } catch (error) {
-      console.error('Login error:', error);
-      throw new Error('Invalid credentials');
+      console.error('Google sign-in error:', error);
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        throw new Error('An account already exists with this email. Please sign in with email/password.');
+      }
+      throw new Error(error.message || 'Google sign-in failed');
     }
   };
 
   const signup = async (userData) => {
     try {
-      // In real app, call API
-      // const response = await authAPI.signup(userData);
-      
-      // Mock response
-      const mockUser = {
-        id: '1',
-        ...userData,
+      const { name, email, phone, password, userType } = userData;
+
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
+
+      const userProfile = {
+        name,
+        email,
+        phone,
+        userType,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       };
-      
-      // Don't auto-login after signup
-      return mockUser;
+
+      await setDoc(doc(db, 'users', firebaseUser.uid), userProfile);
+
+      if (userType === 'driver') {
+        await setDoc(doc(db, 'driverDocuments', firebaseUser.uid), {});
+      }
+
+      return { uid: firebaseUser.uid, ...userProfile };
     } catch (error) {
       console.error('Signup error:', error);
-      throw new Error('Signup failed');
+      let message = 'Signup failed';
+      if (error.code === 'auth/email-already-in-use') message = 'Email is already in use';
+      else if (error.code === 'auth/invalid-email') message = 'Invalid email address';
+      else if (error.code === 'auth/weak-password') message = 'Password should be at least 6 characters';
+      throw new Error(message);
     }
   };
 
   const logout = async () => {
     try {
-      // In real app, call API
-      // await authAPI.logout();
-      
+      await GoogleSignin.signOut();
+      await signOut(auth);
       await AsyncStorage.removeItem('authToken');
       await AsyncStorage.removeItem('user');
       await AsyncStorage.removeItem('driverDocuments');
-      
       setUser(null);
       setIsAuthenticated(false);
       setDriverDocuments({});
@@ -110,6 +234,23 @@ export const AuthProvider = ({ children }) => {
 
   const updateUser = async (userData) => {
     try {
+      if (!user?.uid) throw new Error('You must be logged in');
+
+      const userDocRef = doc(db, 'users', user.uid);
+
+      const updatePayload = Object.keys(userData).reduce((acc, key) => {
+        const value = userData[key];
+        if (typeof value === 'object' && value !== null && !value.seconds) {
+          acc[key] = value;
+        } else {
+          acc[key] = value;
+        }
+        return acc;
+      }, {});
+      updatePayload.updatedAt = serverTimestamp();
+
+      await updateDoc(userDocRef, updatePayload);
+
       const updatedUser = { ...user, ...userData };
       await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
@@ -120,21 +261,40 @@ export const AuthProvider = ({ children }) => {
 
   const uploadDriverDocument = async (documentType, fileData) => {
     try {
-      if (!user?.id) throw new Error('You must be logged in');
+      if (!user?.uid) throw new Error('You must be logged in');
 
-      const userDocs = driverDocuments[user.id] || {};
+      const storageRef = ref(
+        storage,
+        `driver-documents/${user.uid}/${documentType}`
+      );
+
+      const response = await fetch(fileData.uri);
+      const blob = await response.blob();
+
+      await uploadBytesResumable(storageRef, blob);
+
+      const downloadURL = await getDownloadURL(storageRef);
+
+      const docRef = doc(db, 'driverDocuments', user.uid);
+
+      const userDocs = driverDocuments[user.uid] || {};
       const updatedUserDocs = {
         ...userDocs,
         [documentType]: {
-          ...fileData,
+          name: fileData.name,
+          size: fileData.size,
+          mimeType: fileData.mimeType,
+          url: downloadURL,
           status: 'uploaded',
-          uploadedAt: new Date().toISOString(),
+          uploadedAt: serverTimestamp(),
         },
       };
 
+      await setDoc(docRef, updatedUserDocs, { merge: true });
+
       const updatedAllDocs = {
         ...driverDocuments,
-        [user.id]: updatedUserDocs,
+        [user.uid]: updatedUserDocs,
       };
 
       setDriverDocuments(updatedAllDocs);
@@ -149,9 +309,9 @@ export const AuthProvider = ({ children }) => {
 
   const submitDriverVerification = async () => {
     try {
-      if (!user?.id) throw new Error('You must be logged in');
+      if (!user?.uid) throw new Error('You must be logged in');
 
-      const userDocs = driverDocuments[user.id] || {};
+      const userDocs = driverDocuments[user.uid] || {};
       const requiredDocs = ['driversLicense', 'vehicleRegistration', 'idDocument'];
       const hasAllRequired = requiredDocs.every((docType) => !!userDocs[docType]);
 
@@ -163,14 +323,22 @@ export const AuthProvider = ({ children }) => {
         acc[key] = {
           ...userDocs[key],
           status: 'under_review',
-          submittedAt: new Date().toISOString(),
+          submittedAt: serverTimestamp(),
         };
         return acc;
       }, {});
 
+      const docRef = doc(db, 'driverDocuments', user.uid);
+      await setDoc(docRef, submittedDocs, { merge: true });
+
+      await updateDoc(doc(db, 'users', user.uid), {
+        verificationStatus: 'under_review',
+        updatedAt: serverTimestamp(),
+      });
+
       const updatedAllDocs = {
         ...driverDocuments,
-        [user.id]: submittedDocs,
+        [user.uid]: submittedDocs,
       };
 
       setDriverDocuments(updatedAllDocs);
@@ -184,8 +352,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const getDriverVerification = () => {
-    if (!user?.id) return {};
-    return driverDocuments[user.id] || {};
+    if (!user?.uid) return {};
+    return driverDocuments[user.uid] || {};
   };
 
   return (
@@ -195,6 +363,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         isAuthenticated,
         login,
+        loginWithGoogle,
         signup,
         logout,
         updateUser,
