@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Dimensions, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Animatable from 'react-native-animatable';
@@ -11,70 +11,67 @@ const { width, height } = Dimensions.get('window');
 export default function WelcomeScreen({ navigation }) {
   return (
     <LinearGradient
-      colors={[colors.primary, colors.secondary]}
+      colors={[colors.primary, '#C40000']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.container}
     >
       <SafeAreaView style={styles.content}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <Animatable.View animation="fadeInDown" duration={800} style={styles.header}>
           <View style={styles.logoContainer}>
             <View style={styles.logoBg}>
-              <Ionicons name="car-sport" size={50} color={colors.white} />
+              <Text style={styles.logoText}>Vura</Text>
             </View>
           </View>
           <Text style={styles.title}>Vura</Text>
           <Text style={styles.subtitle}>Your Happy Ride Awaits</Text>
         </Animatable.View>
 
-        <Animatable.View animation="fadeInUp" delay={600} duration={800} style={styles.features}>
-          <View style={styles.featureRow}>
-            <View style={styles.featureIcon}>
-              <Ionicons name="flash" size={24} color={colors.primary} />
+        <Animatable.View animation="fadeInUp" delay={400} duration={800} style={styles.features}>
+          <View style={styles.featureCard}>
+            <View style={styles.featureIconBg}>
+              <Ionicons name="flash" size={28} color={colors.white} />
             </View>
-            <View style={styles.featureText}>
-              <Text style={styles.featureTitle}>Quick & Reliable</Text>
-              <Text style={styles.featureDesc}>Get your ride in minutes</Text>
-            </View>
+            <Text style={styles.featureTitle}>Quick & Reliable</Text>
+            <Text style={styles.featureDesc}>Get your ride in minutes</Text>
           </View>
 
-          <View style={styles.featureRow}>
-            <View style={styles.featureIcon}>
-              <Ionicons name="shield-checkmark" size={24} color={colors.primary} />
+          <View style={styles.featureCard}>
+            <View style={styles.featureIconBg}>
+              <Ionicons name="shield-checkmark" size={28} color={colors.white} />
             </View>
-            <View style={styles.featureText}>
-              <Text style={styles.featureTitle}>Safe & Secure</Text>
-              <Text style={styles.featureDesc}>Verified drivers & real-time tracking</Text>
-            </View>
+            <Text style={styles.featureTitle}>Safe & Secure</Text>
+            <Text style={styles.featureDesc}>Verified drivers & real-time tracking</Text>
           </View>
 
-          <View style={styles.featureRow}>
-            <View style={styles.featureIcon}>
-              <Ionicons name="cash" size={24} color={colors.primary} />
+          <View style={styles.featureCard}>
+            <View style={styles.featureIconBg}>
+              <Ionicons name="cash" size={28} color={colors.white} />
             </View>
-            <View style={styles.featureText}>
-              <Text style={styles.featureTitle}>Best Prices</Text>
-              <Text style={styles.featureDesc}>Transparent pricing, no surprises</Text>
-            </View>
+            <Text style={styles.featureTitle}>Best Prices</Text>
+            <Text style={styles.featureDesc}>Transparent pricing, no surprises</Text>
           </View>
         </Animatable.View>
 
-        <Animatable.View animation="fadeInUp" delay={800} duration={800} style={styles.buttonContainer}>
+        </ScrollView>
+
+        <Animatable.View animation="fadeInUp" delay={600} duration={800} style={styles.buttonContainer}>
           <TouchableOpacity
-            style={[styles.button, styles.loginButton]}
+            style={styles.primaryButton}
             onPress={() => navigation.navigate('Login')}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
           >
-            <Text style={styles.loginButtonText}>Login</Text>
+            <Text style={styles.primaryButtonText}>Login</Text>
             <Ionicons name="arrow-forward" size={20} color={colors.primary} style={{ marginLeft: spacing[2] }} />
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.button, styles.signupButton]}
+            style={styles.secondaryButton}
             onPress={() => navigation.navigate('Signup')}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
           >
-            <Text style={styles.signupButtonText}>Create Account</Text>
+            <Text style={styles.secondaryButtonText}>Create Account</Text>
             <Ionicons name="arrow-forward" size={20} color={colors.white} style={{ marginLeft: spacing[2] }} />
           </TouchableOpacity>
         </Animatable.View>
@@ -89,104 +86,119 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: spacing[4],
     justifyContent: 'space-between',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: spacing[4],
+    justifyContent: 'flex-start',
   },
   header: {
     alignItems: 'center',
-    marginTop: spacing[4],
+    marginTop: spacing[2],
+    marginBottom: spacing[6],
   },
   logoContainer: {
-    marginBottom: spacing[5],
+    marginBottom: spacing[4],
   },
   logoBg: {
-    width: 100,
-    height: 100,
-    borderRadius: borderRadius['2xl'],
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 80,
+    height: 80,
+    borderRadius: borderRadius.base,
+    backgroundColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
-    ...shadows.lg,
+    ...shadows.xl,
+  },
+  logoText: {
+    fontSize: 40,
+    fontWeight: typography.bold,
+    color: colors.primary,
   },
   title: {
-    fontSize: 48,
+    fontSize: 42,
     fontWeight: typography.bold,
     color: colors.white,
     marginBottom: spacing[2],
     letterSpacing: 1,
   },
   subtitle: {
-    fontSize: 18,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: typography.medium,
-    letterSpacing: 0.5,
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.95)',
+    fontWeight: typography.normal,
+    letterSpacing: 0.3,
   },
   features: {
-    flex: 1,
-    justifyContent: 'center',
-    marginVertical: spacing[6],
+    gap: spacing[3],
+    marginVertical: spacing[4],
   },
-  featureRow: {
-    flexDirection: 'row',
+  featureCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    padding: spacing[4],
+    borderRadius: borderRadius.lg,
     alignItems: 'center',
-    marginBottom: spacing[5],
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    padding: spacing[3],
-    borderRadius: borderRadius.lg,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.white,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backdropFilter: 'blur(10px)',
   },
-  featureIcon: {
-    width: 50,
-    height: 50,
+  featureIconBg: {
+    width: 56,
+    height: 56,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.white,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing[3],
-  },
-  featureText: {
-    flex: 1,
+    marginBottom: spacing[3],
   },
   featureTitle: {
     fontSize: 16,
     fontWeight: typography.semibold,
     color: colors.white,
     marginBottom: spacing[1],
+    textAlign: 'center',
   },
   featureDesc: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.85)',
     fontWeight: typography.normal,
+    textAlign: 'center',
   },
   buttonContainer: {
-    marginBottom: spacing[4],
     gap: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingBottom: spacing[4],
   },
-  button: {
-    padding: spacing[4],
+  primaryButton: {
+    backgroundColor: colors.white,
+    paddingVertical: spacing[4],
+    paddingHorizontal: spacing[4],
     borderRadius: borderRadius.lg,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    ...shadows.lg,
+    ...shadows.xl,
   },
-  loginButton: {
-    backgroundColor: colors.white,
-  },
-  loginButtonText: {
+  primaryButtonText: {
     color: colors.primary,
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: typography.bold,
+    letterSpacing: 0.5,
   },
-  signupButton: {
+  secondaryButton: {
     backgroundColor: 'transparent',
+    paddingVertical: spacing[4],
+    paddingHorizontal: spacing[4],
+    borderRadius: borderRadius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
     borderWidth: 2,
     borderColor: colors.white,
   },
-  signupButtonText: {
+  secondaryButtonText: {
     color: colors.white,
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: typography.bold,
+    letterSpacing: 0.5,
   },
 });

@@ -42,7 +42,8 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.0",
-    "@expo/webpack-config": "^19.0.1"
+    "@expo/webpack-config": "^19.0.1",
+    "typescript": "~5.9.2"
   },
   "private": true
 }

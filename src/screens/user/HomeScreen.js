@@ -34,7 +34,8 @@ export default function HomeScreen({ navigation }) {
   }, [getCurrentLocation]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      {/* Full Map Background */}
       <MapView
         provider={PROVIDER_GOOGLE}
         style={styles.map}
@@ -46,6 +47,8 @@ export default function HomeScreen({ navigation }) {
         }}
         showsUserLocation
         showsMyLocationButton={false}
+        zoomEnabled
+        scrollEnabled
       >
         {currentLocation && (
           <Marker
@@ -81,7 +84,7 @@ export default function HomeScreen({ navigation }) {
         </View>
       </Animatable.View>
 
-      {/* Search Card */}
+      {/* Search Card - Floating */}
       <Animatable.View animation="slideInUp" delay={200} duration={600} style={styles.searchCardContainer}>
         <LinearGradient
           colors={[colors.white, colors.lightGray]}
@@ -101,39 +104,29 @@ export default function HomeScreen({ navigation }) {
             </View>
             <Ionicons name="arrow-forward" size={20} color={colors.primary} />
           </TouchableOpacity>
+
+          {/* Quick Locations */}
+          <View style={styles.divider} />
+          <View style={styles.quickLocationsContainer}>
+            {QUICK_LOCATIONS.map((location, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.quickLocationItem}
+                onPress={() => navigation.navigate('RideBooking')}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.quickLocationIcon, { backgroundColor: location.color }]}>
+                  <Ionicons name={location.icon} size={16} color={colors.white} />
+                </View>
+                <Text style={styles.quickLocationLabel}>{location.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </LinearGradient>
       </Animatable.View>
 
-      {/* Quick Actions */}
-      <Animatable.View animation="fadeIn" delay={400} duration={600} style={styles.quickActionsContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.quickActionsScroll}
-        >
-          {QUICK_LOCATIONS.map((location, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.quickAction}
-              activeOpacity={0.8}
-              onPress={() => navigation.navigate('RideBooking')}
-            >
-              <LinearGradient
-                colors={[location.color, `${location.color}DD`]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.quickActionBg}
-              >
-                <Ionicons name={location.icon} size={24} color={colors.white} />
-              </LinearGradient>
-              <Text style={styles.quickActionLabel}>{location.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </Animatable.View>
-
       {/* My Location Button */}
-      <Animatable.View animation="fadeIn" delay={500} duration={600}>
+      <Animatable.View animation="fadeIn" delay={500} duration={600} style={styles.myLocationButtonContainer}>
         <TouchableOpacity
           style={styles.myLocationButton}
           onPress={() => getCurrentLocation().catch(() => null)}
@@ -143,13 +136,13 @@ export default function HomeScreen({ navigation }) {
             colors={gradients.primary}
             style={styles.myLocationGradient}
           >
-            <Ionicons name="locate" size={24} color={colors.white} />
+            <Ionicons name="locate" size={20} color={colors.white} />
           </LinearGradient>
         </TouchableOpacity>
       </Animatable.View>
 
       {/* Bottom Info Card */}
-      <Animatable.View animation="slideInUp" delay={300} duration={600} style={styles.infoCard}>
+      <Animatable.View animation="slideInUp" delay={300} duration={600} style={styles.infoCardContainer}>
         <LinearGradient
           colors={[colors.primary, colors.secondary]}
           start={{ x: 0, y: 0 }}
@@ -157,7 +150,7 @@ export default function HomeScreen({ navigation }) {
           style={styles.infoCardGradient}
         >
           <View style={styles.infoCardContent}>
-            <View>
+            <View style={styles.infoCardText}>
               <Text style={styles.infoCardTitle}>Your Daily Rides</Text>
               <Text style={styles.infoCardValue}>2 rides today</Text>
             </View>
@@ -171,7 +164,7 @@ export default function HomeScreen({ navigation }) {
           </View>
         </LinearGradient>
       </Animatable.View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -182,6 +175,8 @@ const styles = StyleSheet.create({
   },
   map: {
     ...StyleSheet.absoluteFillObject,
+    width: width,
+    height: height,
   },
   markerContainer: {
     width: 40,
@@ -201,10 +196,10 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     position: 'absolute',
-    top: spacing[4],
+    top: spacing[6],
     left: spacing[4],
     right: spacing[4],
-    zIndex: 5,
+    zIndex: 10,
   },
   header: {
     flexDirection: 'row',
@@ -250,7 +245,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     ...shadows.base,
-    position: 'relative',
   },
   notificationBadge: {
     position: 'absolute',
@@ -265,10 +259,10 @@ const styles = StyleSheet.create({
   },
   searchCardContainer: {
     position: 'absolute',
-    bottom: 120,
+    bottom: 80,
     left: spacing[4],
     right: spacing[4],
-    zIndex: 10,
+    zIndex: 15,
   },
   searchCard: {
     borderRadius: borderRadius.xl,
@@ -302,40 +296,43 @@ const styles = StyleSheet.create({
     color: colors.textGray,
     marginTop: spacing[1],
   },
-  quickActionsContainer: {
-    position: 'absolute',
-    bottom: 45,
-    left: 0,
-    right: 0,
-    zIndex: 9,
+  divider: {
+    height: 1,
+    backgroundColor: '#f0f0f0',
   },
-  quickActionsScroll: {
-    paddingHorizontal: spacing[4],
-    gap: spacing[3],
-    paddingVertical: spacing[2],
-  },
-  quickAction: {
-    alignItems: 'center',
+  quickLocationsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[3],
     gap: spacing[2],
   },
-  quickActionBg: {
-    width: 56,
-    height: 56,
-    borderRadius: borderRadius.lg,
+  quickLocationItem: {
+    alignItems: 'center',
+    gap: spacing[2],
+    flex: 1,
+  },
+  quickLocationIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: borderRadius.base,
     justifyContent: 'center',
     alignItems: 'center',
     ...shadows.base,
   },
-  quickActionLabel: {
-    fontSize: 12,
+  quickLocationLabel: {
+    fontSize: 11,
     fontWeight: typography.medium,
     color: colors.black,
+    textAlign: 'center',
+  },
+  myLocationButtonContainer: {
+    position: 'absolute',
+    bottom: 200,
+    right: spacing[4],
+    zIndex: 12,
   },
   myLocationButton: {
-    position: 'absolute',
-    bottom: 220,
-    right: spacing[4],
-    zIndex: 8,
+    zIndex: 12,
   },
   myLocationGradient: {
     width: 56,
@@ -345,15 +342,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     ...shadows.lg,
   },
-  infoCard: {
+  infoCardContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    zIndex: 7,
+    zIndex: 8,
   },
   infoCardGradient: {
-    padding: spacing[4],
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[6],
     borderTopLeftRadius: borderRadius['2xl'],
     borderTopRightRadius: borderRadius['2xl'],
   },
@@ -362,14 +361,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  infoCardText: {
+    flex: 1,
+  },
   infoCardTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: typography.normal,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: 'rgba(255, 255, 255, 0.85)',
     marginBottom: spacing[1],
   },
   infoCardValue: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: typography.bold,
     color: colors.white,
   },
@@ -377,11 +379,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[2],
     borderRadius: borderRadius.lg,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
   },
   infoCardButtonText: {
     color: colors.white,
     fontWeight: typography.semibold,
-    fontSize: 14,
+    fontSize: 13,
   },
 });

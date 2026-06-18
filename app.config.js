@@ -28,14 +28,19 @@ module.exports = {
       ...(appJson.expo.plugins || []).filter(
         (p) => (Array.isArray(p) ? p[0] : p) !== '@react-native-google-signin/google-signin'
       ),
-      [
-        '@react-native-google-signin/google-signin',
-        {
-          iosUrlScheme: googleIosClientId
-            ? googleIosClientId.split('.').reverse().join('.')
-            : '',
-        },
-      ],
+      ...(googleIosClientId &&
+        googleIosClientId.startsWith('com.googleusercontent.apps') &&
+        !googleIosClientId.includes('123456789') &&
+        !googleIosClientId.includes('abcdefgh')
+        ? [
+            [
+              '@react-native-google-signin/google-signin',
+              {
+                iosUrlScheme: googleIosClientId.split('.').reverse().join('.'),
+              },
+            ],
+          ]
+        : []),
     ],
     extra: {
       ...(appJson.expo.extra || {}),

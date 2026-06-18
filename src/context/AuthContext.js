@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import {
   auth,
   db,
@@ -20,10 +20,26 @@ import {
   uploadBytesResumable,
   getDownloadURL,
 } from '../services/firebase';
-import {
-  GOOGLE_WEB_CLIENT_ID,
-  GOOGLE_IOS_CLIENT_ID,
-} from '@env';
+
+// GoogleSignin is not available on web
+let GoogleSignin = null;
+if (Platform.OS !== 'web') {
+  try {
+    GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
+  } catch (e) {
+    console.warn('GoogleSignin not available:', e.message);
+  }
+}
+
+let GOOGLE_WEB_CLIENT_ID, GOOGLE_IOS_CLIENT_ID;
+try {
+  const env = require('@env');
+  GOOGLE_WEB_CLIENT_ID = env.GOOGLE_WEB_CLIENT_ID;
+  GOOGLE_IOS_CLIENT_ID = env.GOOGLE_IOS_CLIENT_ID;
+} catch (e) {
+  GOOGLE_WEB_CLIENT_ID = '';
+  GOOGLE_IOS_CLIENT_ID = '';
+}
 
 export const AuthContext = createContext();
 
@@ -34,10 +50,12 @@ export const AuthProvider = ({ children }) => {
   const [driverDocuments, setDriverDocuments] = useState({});
 
   useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: GOOGLE_WEB_CLIENT_ID,
-      iosClientId: GOOGLE_IOS_CLIENT_ID,
-    });
+    if (GoogleSignin) {
+      GoogleSignin.configure({
+        webClientId: GOOGLE_WEB_CLIENT_ID,
+        iosClientId: GOOGLE_IOS_CLIENT_ID,
+      });
+    }
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
@@ -219,7 +237,9 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await GoogleSignin.signOut();
+      if (GoogleSignin) {
+        try { await GoogleSignin.signOut(); } catch (e) { /* ignore on web */ }
+      }
       await signOut(auth);
       await AsyncStorage.removeItem('authToken');
       await AsyncStorage.removeItem('user');
